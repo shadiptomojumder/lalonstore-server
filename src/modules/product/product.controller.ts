@@ -41,7 +41,6 @@ const getAllProduct = asyncErrorHandler(async (req: Request, res: Response) => {
         "page",
         "sortBy",
         "sortOrder",
-        "all",
     ]);
     const user: IAuthUser = req.user as IAuthUser;
 

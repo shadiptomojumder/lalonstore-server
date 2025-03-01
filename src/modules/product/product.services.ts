@@ -132,9 +132,9 @@ const updateProduct = async (req: Request) => {
         const { productId } = req.params;
 
         // Generate an array of strings for file path
-        const filePaths = (req.files as Express.Multer.File[]).map(
-            (file) => file.path
-        );
+        // const filePaths = (req.files as Express.Multer.File[]).map(
+        //     (file) => file.path
+        // );
 
         // Validate the request body against the product schema
         const parseBody = productUpdateSchema.safeParse(req.body);
@@ -208,15 +208,23 @@ const updateProduct = async (req: Request) => {
 
         // Update product fields
         Object.assign(product, parseBody.data);
+        // Generate an array of strings for file path
+        // Safely extract file paths
+        const filePaths = Array.isArray(req.files)
+            ? (req.files as Express.Multer.File[]).map((file) => file.path)
+            : [];
 
-        // Upload images to Cloudinary
-        const uploadResults = await uploadMultipleOnCloudinary(
-            filePaths,
-            "products"
-        );
-        const newImageUrls = uploadResults.map((image) => image.url);
-        console.log("The imageUrls  is:", newImageUrls);
-
+        // Upload images to Cloudinary only if there are new files
+        let newImageUrls: string[] = [];
+        if (filePaths.length > 0) {
+            const uploadResults = await uploadMultipleOnCloudinary(
+                filePaths,
+                "products"
+            );
+            newImageUrls = Array.isArray(uploadResults)
+                ? uploadResults.map((image) => image.url)
+                : [];
+        }
 
         // Append new images if uploaded
         if (newImageUrls.length > 0) {
@@ -226,7 +234,6 @@ const updateProduct = async (req: Request) => {
         console.log("The Updated Product:", product);
 
         await product.save();
-
 
         // // If product is not found, throw a BAD_REQUEST error
         if (!product) {
@@ -271,6 +278,16 @@ const getAllProduct = async (
                 if (!isNaN(price)) {
                     andConditions.push({ [key]: { $eq: price } });
                 }
+            } else if (key === "category") {
+                // Convert category to ObjectId
+                if (mongoose.Types.ObjectId.isValid(filters[key])) {
+                    andConditions.push({ [key]: filters[key] });
+                }
+            } else if (key === "isWeekendDeal" || key === "isFeatured") {
+                // Ensure boolean conversion
+                const booleanValue =
+                    filters[key] === "true" || filters[key] === true;
+                andConditions.push({ [key]: booleanValue });
             } else {
                 andConditions.push({ [key]: { $eq: filters[key] } });
             }
@@ -278,6 +295,7 @@ const getAllProduct = async (
 
         const whereConditions =
             andConditions.length > 0 ? { $and: andConditions } : {};
+        console.log("The whereConditions is:", whereConditions);
 
         // Fetch products with filters, pagination, and sorting
         const result = await Product.find(whereConditions)
@@ -435,7 +453,10 @@ const deleteProductImage = async (req: Request) => {
         const { imageUrl } = req.body; // Image URL to be deleted
 
         if (!imageUrl) {
-            throw new ApiError(StatusCodes.BAD_REQUEST, "Image URL is required.");
+            throw new ApiError(
+                StatusCodes.BAD_REQUEST,
+                "Image URL is required."
+            );
         }
 
         // Find the product by ID
@@ -446,7 +467,10 @@ const deleteProductImage = async (req: Request) => {
 
         // Check if the image exists in the product
         if (!product.images.includes(imageUrl)) {
-            throw new ApiError(StatusCodes.NOT_FOUND, "Image not found in product.");
+            throw new ApiError(
+                StatusCodes.NOT_FOUND,
+                "Image not found in product."
+            );
         }
 
         // Prevent deletion if only one image is left
@@ -478,12 +502,11 @@ const deleteProductImage = async (req: Request) => {
     }
 };
 
-
 export const ProductService = {
     createProduct,
     updateProduct,
     getAllProduct,
     getSingleProduct,
     deleteProducts,
-    deleteProductImage
+    deleteProductImage,
 };

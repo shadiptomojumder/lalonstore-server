@@ -49,6 +49,8 @@ const ProductSchema = new mongoose.Schema(
             ref: "Category",
             required: true,
         },
+        isWeekendDeal: { type: Boolean, default: false },
+        isFeatured: { type: Boolean, default: false },
     },
     {
         timestamps: true,
