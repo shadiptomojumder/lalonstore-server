@@ -295,7 +295,7 @@ const getAllProduct = async (
 
         const whereConditions =
             andConditions.length > 0 ? { $and: andConditions } : {};
-        console.log("The whereConditions is:", whereConditions);
+        // console.log("The whereConditions is:", whereConditions);
 
         // Fetch products with filters, pagination, and sorting
         const result = await Product.find(whereConditions)

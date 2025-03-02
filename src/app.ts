@@ -28,13 +28,25 @@ app.use(
 //   }),
 // );
 
-// Apply CORS configuration
-app.use(
-  cors({
-    origin: config.allowedOrigins,
-    credentials: true,
-  })
-);
+
+// interface CorsOptions {
+//   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => void;
+//   credentials: boolean;
+// }
+
+// CORS configuration
+const corsOptions = {
+  origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+    if (config.allowedOrigins.includes(origin!) || !origin) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+};
+
+app.use(cors(corsOptions));
 
 app.use(cookieParser());
 
