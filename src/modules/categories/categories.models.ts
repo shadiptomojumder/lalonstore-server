@@ -13,6 +13,9 @@ const CategorySchema = new mongoose.Schema(
             required: true,
             unique: true,
         },
+        logo: {
+            type: String,
+        },
         thumbnail: {
             type: String,
         },
@@ -27,7 +30,7 @@ CategorySchema.set("toJSON", {
         ret.id = ret._id;
         delete ret._id;
         delete ret.__v; // Optional: remove __v
-    }
+    },
 });
 
 CategorySchema.index({ title: 1 });
