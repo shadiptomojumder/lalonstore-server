@@ -339,11 +339,25 @@ const getAllProduct = async (
 };
 
 // Function to get a single product by ID
-const getSingleProduct = async (id: string) => {
+const getProductById = async (req:Request) => {
     try {
-        // Retrieve the product with the specified ID from the database
-        const product = await Product.findById(id).populate("category");
+        // Product Id
+        const { productId } = req.params;
+        console.log("The Product ID is:", productId);
+        
+        if (!productId) {
+            throw new ApiError(StatusCodes.BAD_REQUEST, "Product ID is required");
+        }
 
+        // Validate the productId
+        if (!mongoose.Types.ObjectId.isValid(productId)) {
+            throw new ApiError(StatusCodes.NOT_FOUND, "Invalid Product ID format");
+        }
+
+        // Retrieve the product with the specified ID from the database
+        const product = await Product.findById(productId).populate("category");
+        console.log("Product is:", product);
+        
         // If the product is not found, throw a NOT_FOUND error
         if (!product) {
             throw new ApiError(StatusCodes.NOT_FOUND, "Product not found");
@@ -351,6 +365,8 @@ const getSingleProduct = async (id: string) => {
 
         return product;
     } catch (error) {
+        console.log("Error in getProductById:", error);
+        
         if (error instanceof ApiError) throw error;
         throw new ApiError(
             StatusCodes.INTERNAL_SERVER_ERROR,
@@ -506,7 +522,7 @@ export const ProductService = {
     createProduct,
     updateProduct,
     getAllProduct,
-    getSingleProduct,
+    getProductById,
     deleteProducts,
     deleteProductImage,
 };
