@@ -69,7 +69,6 @@ ProductSchema.set("toJSON", {
 
 ProductSchema.index({ name: 1 }); // Text Search Optimization
 ProductSchema.index({ category: 1 }); // Faster Category Lookups
-ProductSchema.index({ sku: 1 });
 ProductSchema.index({ price: 1 }); // Price-based Filtering Optimization
 ProductSchema.index({ createdAt: -1 }); // Sorting Optimization
 

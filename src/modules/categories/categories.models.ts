@@ -7,6 +7,7 @@ const CategorySchema = new mongoose.Schema(
             required: true,
             unique: true,
             maxlength: 50,
+            index: true,
         },
         value: {
             type: String,
@@ -32,9 +33,6 @@ CategorySchema.set("toJSON", {
         delete ret.__v; // Optional: remove __v
     },
 });
-
-CategorySchema.index({ title: 1 });
-CategorySchema.index({ value: 1 });
 
 const Category = mongoose.model("Category", CategorySchema);
 

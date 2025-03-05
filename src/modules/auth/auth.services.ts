@@ -7,10 +7,11 @@ import { StatusCodes } from "http-status-codes";
 import { Secret } from "jsonwebtoken";
 import { User } from "../user/user.model";
 import { AuthUtils } from "./auth.utils";
+import { normalizePhoneNumber } from "@/shared/normalizePhoneNumber";
 
 // Signup function to register a new user
 const signup = async (req: Request) => {
-    try {
+    try {     
         // Validate the request body against the user schema
         const parseBody = signupDataSchema.safeParse(req.body);
         if (!parseBody.success) {
@@ -20,16 +21,21 @@ const signup = async (req: Request) => {
                 .join(",");
             throw new ApiError(StatusCodes.BAD_REQUEST, errorMessages);
         }
+        console.log("The parseBody is:", parseBody);
+        
 
-        const { email, fullname, password } = parseBody.data;
+        const { email, phone, password } = parseBody.data;
 
-        // Check if a user with the same email or fullname already exists
-        const isUserExist = await User.findOne({
-            $or: [{ email }, { fullname }],
-        })
-            .select("-password -refreshToken -otp")
-            .lean()
-            .exec();
+        // Normalize the phone number
+        const normalizedPhone = phone ? normalizePhoneNumber(phone) : null;
+
+        // Check if a user with the same email or phone already exists
+        let isUserExist;
+        if (email) {
+            isUserExist = await User.findOne({ email });
+        } else if (normalizedPhone) {
+            isUserExist = await User.findOne({ phone:normalizedPhone });
+        }
 
         // If user exists, throw a CONFLICT error
         if (isUserExist) {
@@ -42,16 +48,19 @@ const signup = async (req: Request) => {
         // Create a new user in the database with the hashed password
         const user = await User.create({
             ...parseBody.data,
+            phone: normalizedPhone,
             password: hashPassword,
         });
 
         return user;
     } catch (error) {
-      if (error instanceof ApiError) throw error;
-      throw new ApiError(
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          "An unexpected error occurred"
-      );
+        console.log("Error creating user", error);
+        
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            "An unexpected error occurred"
+        );
     }
 };
 
@@ -125,11 +134,11 @@ const login = async (req: Request) => {
             },
         };
     } catch (error) {
-      if (error instanceof ApiError) throw error;
-      throw new ApiError(
-          StatusCodes.INTERNAL_SERVER_ERROR,
-          "An unexpected error occurred"
-      );
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            "An unexpected error occurred"
+        );
     }
 };
 
