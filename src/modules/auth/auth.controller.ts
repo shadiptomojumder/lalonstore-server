@@ -32,7 +32,8 @@ const login = asyncErrorHandler(async (req: Request, res: Response) => {
   const cookieOptions = {
     httpOnly: true,
     secure: config.env === "production",
-    // sameSite: "strict" as const,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    sameSite: "lax" as const,
   };
   res.cookie("accessToken", accessToken, cookieOptions);
 
