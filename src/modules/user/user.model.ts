@@ -57,6 +57,14 @@ const userSchemaDefinition = new Schema(
     }
 );
 
+userSchemaDefinition.set("toJSON", {
+    transform: (doc, ret) => {
+        ret.id = ret._id;
+        delete ret._id;
+        delete ret.__v; // Optional: remove __v
+    },
+});
+
 // Pre-save hook to normalize phone numbers
 userSchemaDefinition.pre("save", function (next) {
     if (this.phone) {

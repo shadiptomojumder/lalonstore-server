@@ -8,11 +8,10 @@ import { AuthUtils } from "./auth.utils";
 
 // Controller function to handle user signup
 const signup = asyncErrorHandler(
-  async (req: Request, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response) => {
     // Call the signup service to create a new user
     const result = await AuthServices.signup(req);
 
-    // Send a response with the created user data
     ApiResponse(res, {
       statusCode: StatusCodes.CREATED,
       success: true,
@@ -31,8 +30,9 @@ const login = asyncErrorHandler(async (req: Request, res: Response) => {
 
   // Set the refresh token into a cookie with secure and httpOnly options
   const cookieOptions = {
-    secure: config.env === "production",
     httpOnly: true,
+    secure: config.env === "production",
+    // sameSite: "strict" as const,
   };
   res.cookie("accessToken", accessToken, cookieOptions);
 
