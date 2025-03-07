@@ -116,18 +116,18 @@ const login = async (req: Request) => {
         try {
             accessToken = AuthUtils.generateToken(
                 {
-                    userId: isUserExist._id,
-                    userEmail: isUserExist.email,
-                    userRole: isUserExist.role,
+                    id: isUserExist._id,
+                    email: isUserExist.email,
+                    role: isUserExist.role,
                 },
                 config.jwt.secret as Secret,
                 config.jwt.expires_in as string
             );
             refreshToken = AuthUtils.generateToken(
                 {
-                    userId: isUserExist._id,
-                    userEmail: isUserExist.email,
-                    userRole: isUserExist.role,
+                    id: isUserExist._id,
+                    email: isUserExist.email,
+                    role: isUserExist.role,
                 },
                 config.jwt.refresh_secret as Secret,
                 config.jwt.refresh_expires_in as string
