@@ -5,6 +5,7 @@ import asyncErrorHandler from "@/shared/asyncErrorHandler";
 import { Request, Response } from "express";
 import { StatusCodes } from "http-status-codes";
 import { AuthUtils } from "./auth.utils";
+import { parseExpiry } from "@/shared/parseExpiry";
 
 // Controller function to handle user signup
 const signup = asyncErrorHandler(async (req: Request, res: Response) => {
@@ -30,8 +31,7 @@ const login = asyncErrorHandler(async (req: Request, res: Response) => {
     const cookieOptions = {
         httpOnly: true,
         secure: config.env === "production",
-        maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
-        // maxAge: 120 * 1000, // 7 days in milliseconds
+        maxAge: parseExpiry(config.jwt.expires_in || "10m"), 
         sameSite: "lax" as const,
     };
     res.cookie("accessToken", accessToken, cookieOptions);
