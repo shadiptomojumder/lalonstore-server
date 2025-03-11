@@ -63,6 +63,9 @@ app.get("/test", async (req: Request, res: Response) => {
     message: "Server working....!",
   });
 });
+app.get('/', (req, res) => {
+  res.send('Lalon Store Server is running..!')
+})
 
 // Global error handler middleware
 app.use(globalErrorHandler);
