@@ -116,23 +116,21 @@ const login = async (req: Request) => {
         try {
             accessToken = AuthUtils.generateToken(
                 {
-                    id: isUserExist._id,
+                    id: isUserExist._id.toString(),
                     email: isUserExist.email,
                     role: isUserExist.role,
                 },
-                config.jwt.secret as Secret,
-                config.jwt.expires_in as string
             );
             refreshToken = AuthUtils.generateToken(
                 {
-                    id: isUserExist._id,
+                    id: isUserExist._id.toString(),
                     email: isUserExist.email,
                     role: isUserExist.role,
                 },
-                config.jwt.refresh_secret as Secret,
-                config.jwt.refresh_expires_in as string
             );
-        } catch (tokenError) {
+        } catch (error) {
+            //console.log("The token error is:",error);
+            
             throw new ApiError(
                 StatusCodes.INTERNAL_SERVER_ERROR,
                 "Failed to generate authentication tokens"
