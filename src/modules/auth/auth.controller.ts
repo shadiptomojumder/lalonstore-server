@@ -32,7 +32,7 @@ const login = asyncErrorHandler(async (req: Request, res: Response) => {
         httpOnly: true,
         secure: config.env === "production",
         maxAge: parseExpiry(config.jwt.expires_in || "10m"), 
-        sameSite: "lax" as const,
+        sameSite: "none" as const,
     };
     res.cookie("accessToken", accessToken, cookieOptions);
 
