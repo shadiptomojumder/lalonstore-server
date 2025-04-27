@@ -20,7 +20,10 @@ router.get("/:categoryId", categoriesController.getCategoryById);
 // Update a category (thumbnail update is optional)
 router.patch("/:categoryId",upload.fields([{ name: "thumbnail", maxCount: 1 }, { name: "logo", maxCount: 1 }]), categoriesController.updateCategory);
 
-// Delete a single or multiple categories
-router.delete("/:id?", categoriesController.deleteCategory);
+// Delete Single Category by ID
+router.delete("/:categoryId", categoriesController.deleteSingleCategory);
+
+// Delete Multiple Categories
+router.delete("", categoriesController.deleteMultipleCategories);
 
 export const CategoryRoutes:Router = router;

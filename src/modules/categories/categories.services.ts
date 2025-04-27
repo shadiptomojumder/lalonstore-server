@@ -6,6 +6,7 @@ import { deleteLocalFiles } from "@/shared/deleteLocalFiles";
 import { extractCloudinaryPublicId } from "@/shared/extractCloudinaryPublicId";
 import { Request } from "express";
 import { StatusCodes } from "http-status-codes";
+import mongoose from "mongoose";
 import ApiError from "../../errors/ApiError";
 import Category from "./categories.models";
 import { categorySchema, categoryUpdateSchema } from "./categories.schemas";
@@ -111,8 +112,10 @@ const createCategory = async (req: Request) => {
         if (error instanceof ApiError) throw error; // Keep the original error's status code
         throw new ApiError(
             StatusCodes.INTERNAL_SERVER_ERROR,
-            "An unexpected error occurred"
-        ); // Only catch non-ApiErrors
+            `An unexpected error occurred while creating the category:${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
+        );
     }
 };
 
@@ -243,7 +246,9 @@ const updateCategory = async (req: Request) => {
         if (error instanceof ApiError) throw error;
         throw new ApiError(
             StatusCodes.INTERNAL_SERVER_ERROR,
-            "An unexpected error occurred"
+            `An unexpected error occurred while updating category:${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
         );
     }
 };
@@ -265,7 +270,9 @@ const getAllCategory = async (req: Request) => {
         if (error instanceof ApiError) throw error;
         throw new ApiError(
             StatusCodes.INTERNAL_SERVER_ERROR,
-            "An unexpected error occurred"
+            `An unexpected error occurred while getting all categories:${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
         );
     }
 };
@@ -288,35 +295,119 @@ const getCategoryById = async (req: Request) => {
         if (error instanceof ApiError) throw error;
         throw new ApiError(
             StatusCodes.INTERNAL_SERVER_ERROR,
-            "An unexpected error occurred"
+            `An unexpected error occurred while getting category By ID:${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
         );
     }
 };
 
-// Function to delete a category by ID
-const deleteCategory = async (req: Request) => {
+// Delete a single category By ID
+const deleteSingleCategory = async (req: Request) => {
     try {
-        const { id } = req.params;
+        const { categoryId } = req.params;
+
+        if (!categoryId) {
+            throw new ApiError(
+                StatusCodes.BAD_REQUEST,
+                "Category ID is required"
+            );
+        }
+
+        // Validate the productId to ensure it's a valid ObjectId
+        if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+            throw new ApiError(
+                StatusCodes.BAD_REQUEST,
+                `Invalid Category Id: ${categoryId}`
+            );
+        }
+
+        const category = await Category.findById(categoryId);
+        if (!category) {
+            throw new ApiError(StatusCodes.NOT_FOUND, "Category not found");
+        }
+
+        const deletedCategory = await Category.findByIdAndDelete(categoryId);
+        if (!deletedCategory) {
+            throw new ApiError(
+                StatusCodes.INTERNAL_SERVER_ERROR,
+                "Failed to delete category"
+            );
+        }
+
+        // Delete images from Cloudinary if they exist
+        const pathsToDelete: string[] = [];
+        if (category.thumbnail) {
+            const publicId = extractCloudinaryPublicId(category.thumbnail);
+            await deleteFromCloudinary(publicId);
+            pathsToDelete.push(category.thumbnail);
+        }
+        if (category.logo) {
+            const publicId = extractCloudinaryPublicId(category.logo);
+            await deleteFromCloudinary(publicId);
+            pathsToDelete.push(category.logo);
+        }
+
+        // Delete the locally stored files
+        deleteLocalFiles(pathsToDelete);
+
+        return { message: "Category deleted successfully" };
+    } catch (error) {
+        if (error instanceof ApiError) throw error;
+        throw new ApiError(
+            StatusCodes.INTERNAL_SERVER_ERROR,
+            `An unexpected error occurred while deleting the category:${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
+        );
+    }
+};
+
+// Delete multiple categories
+const deleteMultipleCategories = async (req: Request) => {
+    try {
         const { ids } = req.body;
 
-        if (id) {
-            // Find the category to get the thumbnail (if exists)
-            const category = await Category.findById(id);
-            if (!category) {
-                throw new ApiError(StatusCodes.NOT_FOUND, "Category not found");
-            }
+        if (!Array.isArray(ids) || ids.length === 0) {
+            throw new ApiError(
+                StatusCodes.BAD_REQUEST,
+                "Invalid request. 'ids' must be a non-empty array"
+            );
+        }
+        // Validate the ids to ensure they're valid ObjectId strings
+        const invalidIds = ids.filter(
+            (id) => !mongoose.Types.ObjectId.isValid(id)
+        );
+        if (invalidIds.length > 0) {
+            throw new ApiError(
+                StatusCodes.BAD_REQUEST,
+                `Invalid Category Id(s): ${invalidIds.join(", ")}`
+            );
+        }
 
-            // First, delete the category from the database
-            const deletedCategory = await Category.findByIdAndDelete(id);
-            if (!deletedCategory) {
-                throw new ApiError(
-                    StatusCodes.INTERNAL_SERVER_ERROR,
-                    "Failed to delete category"
-                );
-            }
+        // Fetch all categories to ensure they exist
+        const existingCategories = await Category.find({
+            _id: { $in: ids },
+        });
 
-            // Delete images from Cloudinary if the category has a thumbnail or logo
-            const pathsToDelete = [];
+        if (existingCategories.length !== ids.length) {
+            throw new ApiError(
+                StatusCodes.NOT_FOUND,
+                "One or more category IDs do not exist"
+            );
+        }
+
+        const result = await Category.deleteMany({ _id: { $in: ids } });
+        if (result.deletedCount !== ids.length) {
+            throw new ApiError(
+                StatusCodes.INTERNAL_SERVER_ERROR,
+                "Some categories could not be deleted"
+            );
+        }
+
+        // Delete associated images from Cloudinary
+        const pathsToDelete: string[] = [];
+        for (const category of existingCategories) {
             if (category.thumbnail) {
                 const publicId = extractCloudinaryPublicId(category.thumbnail);
                 await deleteFromCloudinary(publicId);
@@ -327,68 +418,18 @@ const deleteCategory = async (req: Request) => {
                 await deleteFromCloudinary(publicId);
                 pathsToDelete.push(category.logo);
             }
-
-            // Delete the locally stored files
-            deleteLocalFiles(pathsToDelete);
-
-            return { message: "Category deleted successfully" };
-        } else if (ids && Array.isArray(ids)) {
-            // Validate that 'ids' is an array and contains valid values
-            if (!Array.isArray(ids) || ids.length === 0) {
-                throw new ApiError(
-                    StatusCodes.BAD_REQUEST,
-                    "Invalid request. 'ids' must be a non-empty array"
-                );
-            }
-
-            // Fetch all categories to ensure they exist
-            const existingCategories = await Category.find({
-                _id: { $in: ids },
-            });
-            if (existingCategories.length !== ids.length) {
-                throw new ApiError(
-                    StatusCodes.NOT_FOUND,
-                    "One or more category IDs do not exist"
-                );
-            }
-
-            // Delete categories from database first
-            const result = await Category.deleteMany({ _id: { $in: ids } });
-            if (result.deletedCount !== ids.length) {
-                throw new ApiError(
-                    StatusCodes.INTERNAL_SERVER_ERROR,
-                    "Some categories could not be deleted"
-                );
-            }
-
-            // If successful, delete associated images
-            const pathsToDelete = [];
-            for (const category of existingCategories) {
-                if (category.thumbnail) {
-                    const publicId = extractCloudinaryPublicId(
-                        category.thumbnail
-                    );
-                    await deleteFromCloudinary(publicId);
-                    pathsToDelete.push(category.thumbnail);
-                }
-                if (category.logo) {
-                    const publicId = extractCloudinaryPublicId(category.logo);
-                    await deleteFromCloudinary(publicId);
-                    pathsToDelete.push(category.logo);
-                }
-            }
-
-            return {
-                message: `${result.deletedCount} categories deleted successfully`,
-            };
-        } else {
-            throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid request");
         }
+
+        return {
+            message: `${result.deletedCount} categories deleted successfully`,
+        };
     } catch (error) {
         if (error instanceof ApiError) throw error;
         throw new ApiError(
             StatusCodes.INTERNAL_SERVER_ERROR,
-            "An unexpected error occurred"
+            `An unexpected error occurred while deleting categories:${
+                error instanceof Error ? error.message : "Unknown error"
+            }`
         );
     }
 };
@@ -397,6 +438,7 @@ export const CategoryService = {
     createCategory,
     updateCategory,
     getAllCategory,
-    deleteCategory,
+    deleteSingleCategory,
+    deleteMultipleCategories,
     getCategoryById,
 };
