@@ -6,7 +6,7 @@ import { Request } from "express";
 // Configure storage for Multer
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const tempDir = path.join(__dirname, "../../uploads");
+        const tempDir = path.join(__dirname, "../public");
         if (!fs.existsSync(tempDir)) {
             fs.mkdirSync(tempDir, { recursive: true });
         }

@@ -11,6 +11,9 @@ import globalErrorHandler from "./middlewares/globalErrorHandler";
 
 const app: Application = express();
 
+// ✅ Add this line before using express-rate-limit
+app.set('trust proxy', 1); // Trust first proxy (like Vercel, Heroku, etc.)
+
 // Apply security middlewares
 app.use(helmet());
 app.use(
