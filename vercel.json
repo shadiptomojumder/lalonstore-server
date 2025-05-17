@@ -1,5 +1,6 @@
 {
     "version": 2,
+    "buildCommand": "pnpm run build",
     "builds": [
         {
             "src" : "dist/vercel/index.js",
@@ -12,5 +13,5 @@
             "dest": "dist/vercel/index.js"
         }
     ],
-    "buildCommand": "pnpm run build"
+    "outputDirectory": "dist"
 }

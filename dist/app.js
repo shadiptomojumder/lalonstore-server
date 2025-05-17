@@ -19,25 +19,18 @@ const express_rate_limit_1 = __importDefault(require("express-rate-limit"));
 const helmet_1 = __importDefault(require("helmet"));
 const http_status_codes_1 = require("http-status-codes");
 const config_1 = __importDefault(require("./config"));
+const globalErrorHandler_1 = __importDefault(require("./middlewares/globalErrorHandler"));
 const routes_1 = __importDefault(require("./routes"));
 const logger_1 = require("./shared/logger");
-const globalErrorHandler_1 = __importDefault(require("./middlewares/globalErrorHandler"));
 const app = (0, express_1.default)();
 // ✅ Add this line before using express-rate-limit
-app.set('trust proxy', 1); // Trust first proxy (like Vercel, Heroku, etc.)
+app.set("trust proxy", 1); // Trust first proxy (like Vercel, Heroku, etc.)
 // Apply security middlewares
 app.use((0, helmet_1.default)());
 app.use((0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 1000, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
 }));
-// // Apply CORS configuration
-// app.use(
-//   cors({
-//     origin: ['http://localhost:3000', 'http://localhost:3001'],
-//     credentials: true,
-//   }),
-// );
 // interface CorsOptions {
 //   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => void;
 //   credentials: boolean;
@@ -49,7 +42,7 @@ const corsOptions = {
             callback(null, true);
         }
         else {
-            callback(new Error('Not allowed by CORS'));
+            callback(new Error("Not allowed by CORS"));
         }
     },
     credentials: true,
@@ -67,8 +60,8 @@ app.get("/test", (req, res) => __awaiter(void 0, void 0, void 0, function* () {
         message: "Server working....!",
     });
 }));
-app.get('/', (req, res) => {
-    res.send('Lalon Store Server is running..!');
+app.get("/", (req, res) => {
+    res.send("Lalon Store Server is running..!");
 });
 // Global error handler middleware
 app.use(globalErrorHandler_1.default);
@@ -84,7 +77,6 @@ app.use((req, res, next) => {
             },
         ],
     });
-    next();
 });
 // Graceful shutdown on SIGTERM signal
 process.on("SIGTERM", () => __awaiter(void 0, void 0, void 0, function* () {
