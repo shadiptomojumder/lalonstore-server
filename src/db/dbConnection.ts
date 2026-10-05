@@ -19,7 +19,7 @@ const connectDB = async () => {
         );
        // Sanitize and log the MongoDB URL
        const sanitizedUrl = (config.database_url ?? "").replace(/\/\/.*:.*@/, '//user:***@'); // Mask username and password
-       console.log("MongoDB Connection String (Sanitized):", sanitizedUrl);  // Safely log the sanitized connection string
+       // console.log("MongoDB Connection String (Sanitized):", sanitizedUrl);  // Safely log the sanitized connection string
         // console.log("MongoDB Connection String:",connectionInstance.connection._connectionString);
     } catch (error) {
         console.log("MONGODB CONNECTION FAILD:", error);
