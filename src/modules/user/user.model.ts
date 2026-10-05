@@ -58,7 +58,7 @@ const userSchemaDefinition = new Schema(
 );
 
 userSchemaDefinition.set("toJSON", {
-    transform: (doc, ret) => {
+    transform: (doc, ret:any) => {
         ret.id = ret._id;
         delete ret._id;
         delete ret.__v; // Optional: remove __v
@@ -66,11 +66,10 @@ userSchemaDefinition.set("toJSON", {
 });
 
 // Pre-save hook to normalize phone numbers
-userSchemaDefinition.pre("save", function (next) {
+userSchemaDefinition.pre("save", function () {
     if (this.phone) {
         this.phone = normalizePhoneNumber(this.phone);
     }
-    next();
 });
 
 export const User = mongoose.model("User", userSchemaDefinition);

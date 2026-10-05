@@ -25,7 +25,7 @@ const BannerSchema = new mongoose.Schema(
 );
 
 BannerSchema.set("toJSON", {
-    transform: (doc, ret) => {
+    transform: (doc, ret:any) => {
         ret.id = ret._id;
         delete ret._id;
         delete ret.__v; // Optional: remove __v
@@ -47,7 +47,7 @@ const BannerImageSchema = new mongoose.Schema(
 );
 
 BannerImageSchema.set("toJSON", {
-    transform: (doc, ret) => {
+    transform: (doc, ret:any) => {
         ret.id = ret._id;
         delete ret._id;
         delete ret.__v; // Optional: remove __v

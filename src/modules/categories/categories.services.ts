@@ -24,8 +24,8 @@ const createCategory = async (req: Request) => {
 
         // If validation fails, collect error messages and throw a BAD_REQUEST error
         if (!parseBody.success) {
-            const errorMessages: string = parseBody.error.errors
-                .map((error) => error.message)
+            const errorMessages: string = parseBody.error.issues
+                .map((issue) => issue.message)
                 .join(",");
             // Delete the locally stored file before throwing an error
             const pathsToDelete = [];
@@ -135,8 +135,8 @@ const updateCategory = async (req: Request) => {
 
         // If validation fails, collect error messages and throw a BAD_REQUEST error
         if (!parseBody.success) {
-            const errorMessages = parseBody.error.errors
-                .map((error) => error.message)
+            const errorMessages = parseBody.error.issues
+                .map((issue) => issue.message)
                 .join(",");
             const pathsToDelete = [];
             if (files["thumbnail"])
@@ -315,7 +315,7 @@ const deleteSingleCategory = async (req: Request) => {
         }
 
         // Validate the productId to ensure it's a valid ObjectId
-        if (!mongoose.Types.ObjectId.isValid(categoryId)) {
+        if (!mongoose.Types.ObjectId.isValid(categoryId as string)) {
             throw new ApiError(
                 StatusCodes.BAD_REQUEST,
                 `Invalid Category Id: ${categoryId}`

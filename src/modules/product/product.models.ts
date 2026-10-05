@@ -58,7 +58,7 @@ const ProductSchema = new mongoose.Schema(
 );
 
 ProductSchema.set("toJSON", {
-    transform: (doc, ret) => {
+    transform: (doc, ret:any) => {
         ret.id = ret._id;
         ret.price = parseFloat(ret.price.toString());
         ret.finalPrice = parseFloat(ret.finalPrice.toString());

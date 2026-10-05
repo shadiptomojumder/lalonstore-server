@@ -12,7 +12,7 @@ import { IAuthUser } from "../../interfaces/common";
 const getOneUser = asyncErrorHandler(async (req: Request, res: Response) => {
   const userId = req.params.id;
 
-  const result = await UserServices.getOneUser(userId);
+  const result = await UserServices.getOneUser(userId as string);
 
   ApiResponse(res, {
     statusCode: StatusCodes.OK,

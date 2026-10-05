@@ -29,8 +29,8 @@ const createProduct = async (req: Request) => {
 
         // If validation fails, collect error messages and throw a BAD_REQUEST error
         if (!parseBody.success) {
-            const errorMessages = parseBody.error.errors
-                .map((error) => error.message)
+            const errorMessages = parseBody.error.issues
+                .map((issue) => issue.message)
                 .join(",");
             // Delete locally stored images before throwing error
             deleteLocalFiles(filePaths);
@@ -138,8 +138,8 @@ const updateProduct = async (req: Request) => {
 
         // If validation fails, collect error messages and throw a BAD_REQUEST error
         if (!parseBody.success) {
-            const errorMessages = parseBody.error.errors
-                .map((error) => error.message)
+            const errorMessages = parseBody.error.issues
+                .map((issue) => issue.message)
                 .join(",");
             throw new ApiError(StatusCodes.BAD_REQUEST, errorMessages);
         }
@@ -364,7 +364,7 @@ const getProductById = async (req: Request) => {
         }
 
         // Validate the productId
-        if (!mongoose.Types.ObjectId.isValid(productId)) {
+        if (!mongoose.Types.ObjectId.isValid(productId as string)) {
             throw new ApiError(
                 StatusCodes.NOT_FOUND,
                 "Invalid Product ID format"
@@ -407,7 +407,7 @@ const deleteSingleProduct = async (req: Request) => {
         }
 
         // Validate the productId to ensure it's a valid ObjectId
-        if (!mongoose.Types.ObjectId.isValid(productId)) {
+        if (!mongoose.Types.ObjectId.isValid(productId as string)) {
             throw new ApiError(
                 StatusCodes.BAD_REQUEST,
                 `Invalid Product Id: ${productId}`

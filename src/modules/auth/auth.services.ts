@@ -13,8 +13,8 @@ const signup = async (req: Request) => {
         const parseBody = signupDataSchema.safeParse(req.body);
         if (!parseBody.success) {
             // If validation fails, collect error messages and throw a BAD_REQUEST error
-            const errorMessages = parseBody.error.errors
-                .map((error) => error.message)
+            const errorMessages = parseBody.error.issues
+                .map((issue) => issue.message)
                 .join(",");
             throw new ApiError(StatusCodes.BAD_REQUEST, errorMessages);
         }
@@ -74,8 +74,8 @@ const login = async (req: Request) => {
 
         // If validation fails, collect error messages and throw a BAD_REQUEST error
         if (!parseBody.success) {
-            const errorMessages = parseBody.error.errors
-                .map((error) => error.message)
+            const errorMessages = parseBody.error.issues
+                .map((issue) => issue.message)
                 .join(",");
             throw new ApiError(StatusCodes.BAD_REQUEST, errorMessages);
         }

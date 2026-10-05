@@ -48,8 +48,8 @@ const updateBanner = async (req: Request) => {
 
         // If validation fails, collect error messages and throw a BAD_REQUEST error
         if (!parseBody.success) {
-            const errorMessages = parseBody.error.errors
-                .map((error) => error.message)
+            const errorMessages = parseBody.error.issues
+                .map((issue) => issue.message)
                 .join(",");
             throw new ApiError(StatusCodes.BAD_REQUEST, errorMessages);
         }
@@ -104,7 +104,7 @@ const getBannerById = async (req: Request) => {
         const { bannerId } = req.params;
 
         // ✅ Check if bannerId is a valid ObjectId
-        if (!mongoose.Types.ObjectId.isValid(bannerId)) {
+        if (!mongoose.Types.ObjectId.isValid(bannerId as string)) {
             throw new ApiError(StatusCodes.BAD_REQUEST, "Invalid banner ID");
         }
 

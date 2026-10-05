@@ -5,7 +5,7 @@ import { IPaginationOptions } from "@/interfaces/pagination";
 import { normalizePhoneNumber } from "@/shared/normalizePhoneNumber";
 import { Request } from "express";
 import { StatusCodes } from "http-status-codes";
-import { FilterQuery } from "mongoose";
+import { QueryFilter  } from "mongoose";
 import { User } from "./user.model";
 import { updateUserSchema } from "./user.schemas";
 import { extractCloudinaryPublicId } from "@/shared/extractCloudinaryPublicId";
@@ -43,7 +43,7 @@ const getAllUser = async (
         // console.log("40.filters is:", filters);
 
         // auth role base logic here
-        const andConditions: FilterQuery<typeof User>[] = [];
+        const andConditions: QueryFilter<typeof User>[] = [];
 
         // Apply filters
         if (Object.keys(filters).length > 0) {
@@ -123,8 +123,8 @@ const updateUser = async (req: Request) => {
 
         // If validation fails, collect error messages and throw a BAD_REQUEST error
         if (!parseBody.success) {
-            const errorMessages = parseBody.error.errors
-                .map((error) => error.message)
+            const errorMessages = parseBody.error.issues
+                .map((issue) => issue.message)
                 .join(",");
             throw new ApiError(StatusCodes.BAD_REQUEST, errorMessages);
         }

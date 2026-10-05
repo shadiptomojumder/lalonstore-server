@@ -26,12 +26,24 @@ const CategorySchema = new mongoose.Schema(
     }
 );
 
+// CategorySchema.set("toJSON", {
+//     transform: (doc, ret) => {
+//         ret.id = ret._id;
+//         delete ret._id;
+//         delete ret.__v; // Optional: remove __v
+//     },
+// });
+
 CategorySchema.set("toJSON", {
-    transform: (doc, ret) => {
-        ret.id = ret._id;
+    virtuals: true,
+    transform: (_doc, ret: any) => {
         delete ret._id;
-        delete ret.__v; // Optional: remove __v
+        delete ret.__v;
     },
+});
+
+CategorySchema.set("toObject", {
+    virtuals: true,
 });
 
 const Category = mongoose.model("Category", CategorySchema);
