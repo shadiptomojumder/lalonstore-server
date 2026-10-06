@@ -7,7 +7,6 @@ import { StatusCodes } from "http-status-codes";
 import config from "./config";
 import globalErrorHandler from "./middlewares/globalErrorHandler";
 import routes from "./routes";
-import { logger } from "./shared/logger";
 
 const app: Application = express();
 
@@ -19,56 +18,57 @@ app.use(helmet());
 app.use(
     rateLimit({
         windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 1000, // Limit each IP to 100 requests per `window` (here, per 15 minutes).
+        max: 1000, // Limit each IP to 1000 requests per window
+        standardHeaders: true,
+        legacyHeaders: false,
     })
 );
 
-// interface CorsOptions {
-//   origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => void;
-//   credentials: boolean;
-// }
-
 // CORS configuration
-const corsOptions = {
+const corsOptions: cors.CorsOptions = {
     origin: (
         origin: string | undefined,
         callback: (err: Error | null, allow?: boolean) => void
     ) => {
-        if (config.allowedOrigins.includes(origin!) || !origin) {
+        // Allow requests with no origin (server-to-server, curl, mobile apps, Postman)
+        if (!origin || config.allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
+            console.warn(`CORS blocked request from origin: ${origin}`);
             callback(new Error("Not allowed by CORS"));
         }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+    allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
 
 app.use(cookieParser());
 
-// Body parser
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsing middleware
+app.use(express.json({ limit: "10kb" }));
+app.use(express.urlencoded({ extended: true, limit: "10kb" }));
 
-// Register API routes
+// Register API route with versioning
 app.use("/api/v1", routes);
 
 // Test endpoint to verify server is working
-app.get("/test", async (req: Request, res: Response) => {
-    res.status(200).json({
-        message: "Server working....!",
+if (config.env !== "production") {
+    app.get("/test", (_req: Request, res: Response) => {
+        res.status(200).json({
+            message: "🚀 Lalon Store Testing API is working.",
+        });
     });
-});
-app.get("/", (req, res) => {
-    res.send("Lalon Store Server is running..!");
+}
+
+app.get("/", (_req: Request, res: Response) => {
+    res.send("🚀 Lalon Store Server is running..!");
 });
 
-// Global error handler middleware
-app.use(globalErrorHandler);
-
-// Handle 404 - Not Found errors
-app.use((req: Request, res: Response, next: NextFunction) => {
+// 404 handler MUST come before the global error handler
+app.use((req: Request, res: Response, _next: NextFunction) => {
     res.status(StatusCodes.NOT_FOUND).json({
         success: false,
         message: "Not Found",
@@ -81,10 +81,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
     });
 });
 
-// Graceful shutdown on SIGTERM signal
-process.on("SIGTERM", async () => {
-    logger.info("SIGTERM signal received: closing HTTP server");
-    process.exit(0);
-});
+// Global error handler — must be last
+app.use(globalErrorHandler);
 
 export default app;

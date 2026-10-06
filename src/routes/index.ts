@@ -1,5 +1,6 @@
 import express, { NextFunction, Request, Response } from "express";
 
+import config from "@/config";
 import { AuthRoutes } from "@/modules/auth/auth.route";
 import { BannerRoutes } from "@/modules/banners/banners.route";
 import { CategoryRoutes } from "@/modules/categories/categories.route";
@@ -45,7 +46,9 @@ const moduleRoutes: ModuleRoute[] = [
 moduleRoutes.forEach((route) => {
     try {
         router.use(route.path, route.route);
-        console.log(`Route registered: ${route.path}`);
+        if (config.env !== "production") {
+            console.log(`Route registered: ${route.path}`);
+        }
     } catch (error) {
         console.error(`Error registering route ${route.path}:`, error);
     }

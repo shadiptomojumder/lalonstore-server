@@ -11,11 +11,8 @@ const connectDB = async () => {
         const connectionInstance = await mongoose.connect(
             config.database_url as string
         );
-        logger.info(
-            `MongoDB Connected! DB HOST: ${connectionInstance.connection.host}`
-        );
         console.log(
-            `MongoDB Connected !! DB-HOST: ${connectionInstance.connection.host} DB-NAME: ${connectionInstance.connection.name}`
+            `🚀 Connected to MongoDB database, DB-NAME: ${connectionInstance.connection.name}`
         );
        // Sanitize and log the MongoDB URL
        const sanitizedUrl = (config.database_url ?? "").replace(/\/\/.*:.*@/, '//user:***@'); // Mask username and password
